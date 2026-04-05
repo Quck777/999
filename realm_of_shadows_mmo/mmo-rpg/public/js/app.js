@@ -30,6 +30,14 @@ const App = (() => {
           loot: [{name:'Камень силы',rarity:'rare',chance:20},{name:'Железная слитка',rarity:'common',chance:50}] },
         { id: 6, name: 'Дракончик', icon: '🐲', level: 10, hp: 200, maxHp: 200, attack: 28, defense: 15, agility: 10, exp: 200, gold: 100,
           loot: [{name:'Чешуя дракона',rarity:'epic',chance:10},{name:'Клык дракона',rarity:'rare',chance:25}] },
+        { id: 7, name: 'Призрак ночи', icon: '👻', level: 7, hp: 90, maxHp: 90, attack: 25, defense: 5, agility: 18, exp: 110, gold: 55,
+          loot: [{name:'Эктоплазма',rarity:'uncommon',chance:40},{name:'Призрачный плащ',rarity:'rare',chance:18}] },
+        { id: 8, name: 'Огненный элементаль', icon: '🔥', level: 9, hp: 130, maxHp: 130, attack: 30, defense: 8, agility: 12, exp: 160, gold: 75,
+          loot: [{name:'Огненное ядро',rarity:'rare',chance:22},{name:'Искра',rarity:'uncommon',chance:50}] },
+        { id: 9, name: 'Ледяная ведьма', icon: '❄️', level: 11, hp: 110, maxHp: 110, attack: 32, defense: 10, agility: 14, exp: 180, gold: 85,
+          loot: [{name:'Ледяной кристалл',rarity:'epic',chance:12},{name:'Мантия льда',rarity:'rare',chance:28}] },
+        { id: 10, name: 'Король демонов', icon: '😈', level: 15, hp: 350, maxHp: 350, attack: 45, defense: 25, agility: 15, exp: 500, gold: 250,
+          loot: [{name:'Сердце демона',rarity:'legendary',chance:5},{name:'Короона тьмы',rarity:'epic',chance:15},{name:'Демонический клинок',rarity:'legendary',chance:3}] },
     ];
 
     const DEMO_ITEMS = [
@@ -38,14 +46,23 @@ const App = (() => {
         { id: 3, name: 'Зелье здоровья', type: 'consumable', icon: '🧪', rarity: 'uncommon', stats: {hp_restore: 50}, quantity: 5, equipped: false },
         { id: 4, name: 'Зелье маны', type: 'consumable', icon: '💧', rarity: 'uncommon', stats: {mana_restore: 30}, quantity: 3, equipped: false },
         { id: 5, name: 'Кожаная броня', type: 'armor', icon: '🦺', rarity: 'common', stats: {endurance: 4}, equipped: true, quantity: 1 },
+        { id: 6, name: 'Шлем воина', type: 'helmet', icon: '🪖', rarity: 'uncommon', stats: {endurance: 3, defense: 2}, equipped: false, quantity: 1 },
+        { id: 7, name: 'Перчатки ловкости', type: 'gloves', icon: '🧤', rarity: 'rare', stats: {agility: 6, crit: 3}, equipped: false, quantity: 1 },
+        { id: 8, name: 'Сапоги скорости', type: 'boots', icon: '👢', rarity: 'epic', stats: {agility: 8, dodge: 5}, equipped: false, quantity: 1 },
+        { id: 9, name: 'Амулет силы', type: 'accessory', icon: '📿', rarity: 'legendary', stats: {strength: 10, hp: 50}, equipped: false, quantity: 1 },
+        { id: 10, name: 'Кольцо удачи', type: 'accessory', icon: '💍', rarity: 'rare', stats: {luck: 8, gold_find: 15}, equipped: false, quantity: 1 },
+        { id: 11, name: 'Большое зелье здоровья', type: 'consumable', icon: '🍷', rarity: 'rare', stats: {hp_restore: 150}, quantity: 2, equipped: false },
+        { id: 12, name: 'Эликсир опыта', type: 'consumable', icon: '✨', rarity: 'epic', stats: {exp_bonus: 50}, quantity: 1, equipped: false },
     ];
 
     const DEMO_LOCATIONS = [
-        { id: 1, name: 'Город Аркхейм', desc: 'Столица королевства. Здесь безопасно. Торговцы, таверна и гильдия.', safe: true, monsters: [] },
-        { id: 2, name: 'Тёмный лес', desc: 'Мрачный лес полон волков и гоблинов. Будьте осторожны!', safe: false, monsters: [0, 2] },
-        { id: 3, name: 'Горы гарпий', desc: 'Скалистые горы с опасными магами и големами.', safe: false, monsters: [3, 4] },
-        { id: 4, name: 'Забытая крепость', desc: 'Древняя крепость, населённая нежитью и каменными стражами.', safe: false, monsters: [1, 4] },
-        { id: 5, name: 'Логово дракона', desc: 'Вулканическая пещера, где обитают сильнейшие монстры. Только для смелых!', safe: false, monsters: [5] },
+        { id: 1, name: 'Город Аркхейм', desc: 'Столица королевства. Здесь безопасно. Торговцы, таверна и гильдия.', safe: true, monsters: [], features: ['shop', 'bank', 'guild', 'tavern'] },
+        { id: 2, name: 'Тёмный лес', desc: 'Мрачный лес полон волков и гоблинов. Будьте осторожны!', safe: false, monsters: [0, 2], features: ['gathering', 'hidden_chest'] },
+        { id: 3, name: 'Горы гарпий', desc: 'Скалистые горы с опасными магами и големами.', safe: false, monsters: [3, 4, 7], features: ['gathering', 'cave'] },
+        { id: 4, name: 'Забытая крепость', desc: 'Древняя крепость, населённая нежитью и каменными стражами.', safe: false, monsters: [1, 4, 6], features: ['dungeon', 'boss'] },
+        { id: 5, name: 'Логово дракона', desc: 'Вулканическая пещера, где обитают сильнейшие монстры. Только для смелых!', safe: false, monsters: [5, 8], features: ['lava', 'treasure'] },
+        { id: 6, name: 'Ледяная пустошь', desc: 'Замёрзшая земля, где правят ледяные ведьмы и элементали.', safe: false, monsters: [8, 9], features: ['ice', 'gathering'] },
+        { id: 7, name: 'Бездна тьмы', desc: 'Самое опасное место в игре. Здесь обитает Король демонов!', safe: false, monsters: [10], features: ['raid', 'final_boss'] },
     ];
 
     const DEMO_CHAT_MESSAGES = {
@@ -95,6 +112,13 @@ const App = (() => {
         { id: 6, name: 'Критический удар', desc: 'Нанести 5 критических ударов', icon: '💥', req: {type:'crits', count:5}, reward: {gold:100}, completed: false },
         { id: 7, name: 'Неуловимый', desc: 'Уклониться 10 раз', icon: '💨', req: {type:'dodges', count:10}, reward: {gold:120, exp:80}, completed: false },
         { id: 8, name: 'Коллекционер', desc: 'Собрать 20 предметов', icon: '🎒', req: {type:'items', count:20}, reward: {gold:200}, completed: false },
+        { id: 9, name: 'Воин света', desc: 'Победить 100 монстров', icon: '⚡', req: {type:'wins', count:100}, reward: {gold:1000, exp:1000, item:'legendary_sword'}, completed: false },
+        { id: 10, name: 'Маг огня', desc: 'Использовать 25 способностей', icon: '🔥', req: {type:'abilities', count:25}, reward: {gold:300, exp:250}, completed: false },
+        { id: 11, name: 'Торговец', desc: 'Совершить 10 покупок', icon: '💎', req: {type:'purchases', count:10}, reward: {gold:500, discount:10}, completed: false },
+        { id: 12, name: 'Первопроходец', desc: 'Исследовать все локации', icon: '🗺️', req: {type:'locations', count:5}, reward: {gold:400, exp:300}, completed: false },
+        { id: 13, name: 'Выживший', desc: 'Провести 50 боёв без смерти', icon: '🛡️', req: {type:'win_streak', count:50}, reward: {gold:800, exp:600, title:'Бессмертный'}, completed: false },
+        { id: 14, name: 'Меценат', desc: 'Пожертвовать 5000 золота', icon: '🎁', req: {type:'donations', count:5000}, reward: {gold:0, exp:1000, title:'Благодетель'}, completed: false },
+        { id: 15, name: 'Легендарный герой', desc: 'Получить все достижения', icon: '🏆', req: {type:'all_achievements', count:14}, reward: {gold:5000, exp:5000, title:'Легенда', item:'god_armor'}, completed: false },
     ];
 
     const DEMO_CRAFTING_RECIPES = [
@@ -103,9 +127,16 @@ const App = (() => {
         { id: 3, name: 'Железный меч', icon: '⚔️', result: {name:'Железный меч',type:'weapon',icon:'⚔️',rarity:'common',stats:{strength:3}}, materials: [{name:'Железо',qty:3},{name:'Дерево',qty:1}] },
         { id: 4, name: 'Стальной щит', icon: '🛡️', result: {name:'Стальной щит',type:'shield',icon:'🛡️',rarity:'rare',stats:{endurance:5,strength:2}}, materials: [{name:'Сталь',qty:4},{name:'Кожа',qty:2}] },
         { id: 5, name: 'Эликсир силы', icon: '💪', result: {name:'Эликсир силы',type:'consumable',icon:'💪',rarity:'rare',stats:{strength_temp:5}}, materials: [{name:'Трава',qty:3},{name:'Кристалл',qty:2}] },
+        { id: 6, name: 'Большое зелье здоровья', icon: '🍷', result: {name:'Большое зелье здоровья',type:'consumable',icon:'🍷',rarity:'rare',stats:{hp_restore:150}}, materials: [{name:'Трава',qty:5},{name:'Кристалл',qty:3},{name:'Вода',qty:2}] },
+        { id: 7, name: 'Шлем воина', icon: '🪖', result: {name:'Шлем воина',type:'helmet',icon:'🪖',rarity:'uncommon',stats:{endurance:3,defense:2}}, materials: [{name:'Сталь',qty:3},{name:'Кожа',qty:2}] },
+        { id: 8, name: 'Перчатки ловкости', icon: '🧤', result: {name:'Перчатки ловкости',type:'gloves',icon:'🧤',rarity:'rare',stats:{agility:6,crit:3}}, materials: [{name:'Кожа',qty:4},{name:'Кристалл',qty:2}] },
+        { id: 9, name: 'Сапоги скорости', icon: '👢', result: {name:'Сапоги скорости',type:'boots',icon:'👢',rarity:'epic',stats:{agility:8,dodge:5}}, materials: [{name:'Сталь',qty:5},{name:'Кожа',qty:4},{name:'Кристалл',qty:3}] },
+        { id: 10, name: 'Амулет силы', icon: '📿', result: {name:'Амулет силы',type:'accessory',icon:'📿',rarity:'legendary',stats:{strength:10,hp:50}}, materials: [{name:'Золото',qty:10},{name:'Кристалл',qty:5},{name:'Камень силы',qty:1}] },
+        { id: 11, name: 'Зелье невидимости', icon: '🌫️', result: {name:'Зелье невидимости',type:'consumable',icon:'🌫️',rarity:'epic',stats:{stealth:30}}, materials: [{name:'Трава',qty:4},{name:'Кристалл',qty:3},{name:'Вода',qty:2}] },
+        { id: 12, name: 'Свиток телепортации', icon: '📜', result: {name:'Свиток телепортации',type:'consumable',icon:'📜',rarity:'rare',stats:{teleport:1}}, materials: [{name:'Бумага',qty:2},{name:'Кристалл',qty:2},{name:'Чернила',qty:1}] },
     ];
 
-    const DEMO_RESOURCES = ['Трава', 'Вода', 'Кристалл', 'Железо', 'Дерево', 'Сталь', 'Кожа', 'Камень'];
+    const DEMO_RESOURCES = ['Трава', 'Вода', 'Кристалл', 'Железо', 'Дерево', 'Сталь', 'Кожа', 'Камень', 'Золото', 'Бумага', 'Чернила', 'Камень силы'];
 
     let demoAchievements = [];
     let demoResources = {};
