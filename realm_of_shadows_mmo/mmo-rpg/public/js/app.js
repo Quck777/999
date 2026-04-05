@@ -86,13 +86,31 @@ const App = (() => {
         'Вперёд!', 'Ребята, на помощь!', 'Спасибо!',
     ];
 
-    let demoLocation = 0;
-    let demoInventory = [];
-    let demoBattleLog = [];
-    let demoWinCount = 0;
-    let demoLoseCount = 0;
-    let demoChatChannel = 'global';
-    let energyRegenTimer = null;
+    const DEMO_ACHIEVEMENTS = [
+        { id: 1, name: 'Первая кровь', desc: 'Победить первого монстра', icon: '🩸', req: {type:'wins', count:1}, reward: {gold:50}, completed: false },
+        { id: 2, name: 'Охотник', desc: 'Победить 10 монстров', icon: '🏹', req: {type:'wins', count:10}, reward: {gold:150, exp:100}, completed: false },
+        { id: 3, name: 'Легенда', desc: 'Победить 50 монстров', icon: '👑', req: {type:'wins', count:50}, reward: {gold:500, exp:500}, completed: false },
+        { id: 4, name: 'Богач', desc: 'Накопить 1000 золота', icon: '💰', req: {type:'gold', count:1000}, reward: {exp:200}, completed: false },
+        { id: 5, name: 'Герой', desc: 'Достичь 10 уровня', icon: '⭐', req: {type:'level', count:10}, reward: {gold:300, item:'epic_potion'}, completed: false },
+        { id: 6, name: 'Критический удар', desc: 'Нанести 5 критических ударов', icon: '💥', req: {type:'crits', count:5}, reward: {gold:100}, completed: false },
+        { id: 7, name: 'Неуловимый', desc: 'Уклониться 10 раз', icon: '💨', req: {type:'dodges', count:10}, reward: {gold:120, exp:80}, completed: false },
+        { id: 8, name: 'Коллекционер', desc: 'Собрать 20 предметов', icon: '🎒', req: {type:'items', count:20}, reward: {gold:200}, completed: false },
+    ];
+
+    const DEMO_CRAFTING_RECIPES = [
+        { id: 1, name: 'Зелье здоровья', icon: '🧪', result: {name:'Зелье здоровья',type:'consumable',icon:'🧪',rarity:'uncommon',stats:{hp_restore:50}}, materials: [{name:'Трава',qty:2},{name:'Вода',qty:1}] },
+        { id: 2, name: 'Зелье маны', icon: '💧', result: {name:'Зелье маны',type:'consumable',icon:'💧',rarity:'uncommon',stats:{mana_restore:30}}, materials: [{name:'Кристалл',qty:2},{name:'Вода',qty:1}] },
+        { id: 3, name: 'Железный меч', icon: '⚔️', result: {name:'Железный меч',type:'weapon',icon:'⚔️',rarity:'common',stats:{strength:3}}, materials: [{name:'Железо',qty:3},{name:'Дерево',qty:1}] },
+        { id: 4, name: 'Стальной щит', icon: '🛡️', result: {name:'Стальной щит',type:'shield',icon:'🛡️',rarity:'rare',stats:{endurance:5,strength:2}}, materials: [{name:'Сталь',qty:4},{name:'Кожа',qty:2}] },
+        { id: 5, name: 'Эликсир силы', icon: '💪', result: {name:'Эликсир силы',type:'consumable',icon:'💪',rarity:'rare',stats:{strength_temp:5}}, materials: [{name:'Трава',qty:3},{name:'Кристалл',qty:2}] },
+    ];
+
+    const DEMO_RESOURCES = ['Трава', 'Вода', 'Кристалл', 'Железо', 'Дерево', 'Сталь', 'Кожа', 'Камень'];
+
+    let demoAchievements = [];
+    let demoResources = {};
+    let demoStats = { wins:0, losses:0, crits:0, dodges:0, itemsCollected:0, monstersKilled:0 };
+    let dailyRewardClaimed = false;
 
     // =============================================
     //  INITIALIZATION
@@ -229,6 +247,10 @@ const App = (() => {
         demoBattleLog = [];
         demoWinCount = 0;
         demoLoseCount = 0;
+        demoAchievements = JSON.parse(JSON.stringify(DEMO_ACHIEVEMENTS));
+        demoResources = { 'Трава': 5, 'Вода': 3, 'Кристалл': 2, 'Железо': 4, 'Дерево': 3, 'Сталь': 1, 'Кожа': 2, 'Камень': 2 };
+        demoStats = { wins:0, losses:0, crits:0, dodges:0, itemsCollected:demoInventory.length, monstersKilled:0 };
+        dailyRewardClaimed = false;
 
         // Populate all tabs
         updateDemoUI();
@@ -239,6 +261,9 @@ const App = (() => {
         loadDemoChat();
         loadDemoQuests();
         loadDemoShop();
+        loadDemoAchievements();
+        loadDemoCrafting();
+        loadDemoDailyReward();
 
         // Energy regeneration
         startEnergyRegen();
@@ -665,6 +690,217 @@ const App = (() => {
         `;
     }
 
+    // ----- Achievements (Demo) -----
+
+    function loadDemoAchievements() {
+        const container = document.getElementById('achievements-list');
+        if (!container) return;
+
+        const completedCount = demoAchievements.filter(a => a.completed).length;
+        container.innerHTML = `
+            <div style="padding:1rem;margin-bottom:1rem;background:linear-gradient(135deg,var(--bg-secondary),var(--bg-card));border-radius:8px;border:1px solid var(--border-color)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+                    <span style="font-size:1.1rem;font-weight:bold;color:var(--accent)">🏆 Достижения</span>
+                    <span style="color:var(--text-muted)">${completedCount}/${demoAchievements.length}</span>
+                </div>
+                <div style="width:100%;height:10px;background:var(--bg-tertiary);border-radius:5px;overflow:hidden">
+                    <div style="width:${(completedCount/demoAchievements.length)*100}%;height:100%;background:linear-gradient(90deg,var(--accent),var(--xp-color));transition:width 0.3s"></div>
+                </div>
+            </div>
+            ${demoAchievements.map(ach => `
+                <div class="achievement-card ${ach.completed ? 'completed' : ''}" style="padding:1rem;margin-bottom:0.75rem;background:var(--bg-card);border:1px solid ${ach.completed ? 'var(--accent)' : 'var(--border-color)'};border-radius:8px;display:flex;gap:1rem;align-items:center">
+                    <div style="font-size:2.5rem">${ach.icon}</div>
+                    <div style="flex:1">
+                        <div style="font-weight:bold;color:${ach.completed ? 'var(--accent)' : 'var(--text)'}">${ach.name}</div>
+                        <div style="font-size:0.85rem;color:var(--text-muted);margin:0.25rem 0">${ach.desc}</div>
+                        <div style="font-size:0.75rem;color:var(--gold)">Награда: ${ach.reward.gold ? ach.reward.gold + ' золота' : ''} ${ach.reward.exp ? ach.reward.exp + ' опыта' : ''}</div>
+                    </div>
+                    <div style="font-size:1.5rem">${ach.completed ? '✅' : '🔒'}</div>
+                </div>
+            `).join('')}
+        `;
+
+        checkAchievements();
+    }
+
+    function checkAchievements() {
+        let changed = false;
+        demoAchievements.forEach(ach => {
+            if (ach.completed) return;
+            let completed = false;
+            if (ach.req.type === 'wins' && demoStats.wins >= ach.req.count) completed = true;
+            if (ach.req.type === 'gold' && currentCharacter && currentCharacter.gold >= ach.req.count) completed = true;
+            if (ach.req.type === 'level' && currentCharacter && currentCharacter.level >= ach.req.count) completed = true;
+            if (ach.req.type === 'crits' && demoStats.crits >= ach.req.count) completed = true;
+            if (ach.req.type === 'dodges' && demoStats.dodges >= ach.req.count) completed = true;
+            if (ach.req.type === 'items' && demoStats.itemsCollected >= ach.req.count) completed = true;
+
+            if (completed) {
+                ach.completed = true;
+                changed = true;
+                if (ach.reward.gold && currentCharacter) currentCharacter.gold += ach.reward.gold;
+                if (ach.reward.exp && currentCharacter) {
+                    currentCharacter.experience += ach.reward.exp;
+                    checkLevelUp();
+                }
+                UI.showToast(`🏆 Достижение: ${ach.name}!`, 'success', 3000);
+            }
+        });
+        if (changed) {
+            updateDemoUI();
+            loadDemoAchievements();
+        }
+    }
+
+    // ----- Crafting (Demo) -----
+
+    function loadDemoCrafting() {
+        const container = document.getElementById('crafting-list');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div style="padding:1rem;margin-bottom:1rem;background:linear-gradient(135deg,var(--bg-secondary),var(--bg-card));border-radius:8px;border:1px solid var(--border-color)">
+                <div style="font-size:1.1rem;font-weight:bold;color:var(--accent);margin-bottom:0.5rem">⚒️ Крафт</div>
+                <div style="font-size:0.85rem;color:var(--text-muted)">Создавайте предметы из собранных ресурсов</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
+                ${DEMO_CRAFTING_RECIPES.map(recipe => {
+                    const canCraft = recipe.materials.every(m => (demoResources[m.name] || 0) >= m.qty);
+                    return `
+                        <div class="item-card" style="border:1px solid ${canCraft ? 'var(--accent)' : 'var(--border-color)'};background:var(--bg-card)">
+                            <div style="display:flex;gap:0.75rem;padding:0.75rem">
+                                <div style="font-size:2rem">${recipe.icon}</div>
+                                <div style="flex:1">
+                                    <div style="font-weight:bold">${recipe.name}</div>
+                                    <div style="font-size:0.75rem;color:var(--text-muted);margin:0.25rem 0">Материалы:</div>
+                                    <div style="font-size:0.7rem">
+                                        ${recipe.materials.map(m => `
+                                            <span style="${(demoResources[m.name]||0) >= m.qty ? 'color:var(--success)' : 'color:var(--hp-color)'}">
+                                                ${m.name}: ${demoResources[m.name]||0}/${m.qty}
+                                            </span>
+                                        `).join(', ')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="padding:0.75rem;border-top:1px solid var(--border-color)">
+                                <button class="btn btn-sm ${canCraft ? 'btn-primary' : 'btn-secondary'}" ${!canCraft ? 'disabled' : ''} onclick="App.craftItem(${recipe.id})">
+                                    ${canCraft ? 'Скрафтить' : 'Недостаточно ресурсов'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            <div style="margin-top:1.5rem;padding:1rem;background:var(--bg-card);border-radius:8px">
+                <div style="font-weight:bold;margin-bottom:0.5rem;color:var(--accent)">🎒 Ваши ресурсы:</div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+                    ${Object.entries(demoResources).map(([name, qty]) => `
+                        <span style="padding:0.35rem 0.75rem;background:var(--bg-tertiary);border-radius:15px;font-size:0.85rem">
+                            ${qty}x ${name}
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function craftItem(recipeId) {
+        const recipe = DEMO_CRAFTING_RECIPES.find(r => r.id === recipeId);
+        if (!recipe) return;
+
+        // Check resources
+        if (!recipe.materials.every(m => (demoResources[m.name] || 0) >= m.qty)) {
+            UI.showToast('Недостаточно ресурсов!', 'error');
+            return;
+        }
+
+        // Consume materials
+        recipe.materials.forEach(m => { demoResources[m.name] -= m.qty; });
+
+        // Add crafted item
+        const newItem = {
+            id: Date.now(),
+            name: recipe.result.name,
+            type: recipe.result.type,
+            icon: recipe.result.icon,
+            rarity: recipe.result.rarity,
+            stats: recipe.result.stats,
+            quantity: 1,
+            equipped: false
+        };
+        demoInventory.push(newItem);
+        demoStats.itemsCollected++;
+
+        UI.showToast(`Скрафчено: ${recipe.name}!`, 'success');
+        updateDemoUI();
+        loadDemoInventory();
+        loadDemoCrafting();
+        checkAchievements();
+    }
+
+    // ----- Daily Reward (Demo) -----
+
+    function loadDemoDailyReward() {
+        const container = document.getElementById('daily-reward-container');
+        if (!container) return;
+
+        if (dailyRewardClaimed) {
+            container.innerHTML = `
+                <div style="padding:2rem;text-align:center;background:var(--bg-card);border-radius:8px;border:1px solid var(--border-color)">
+                    <div style="font-size:3rem;margin-bottom:1rem">✅</div>
+                    <div style="font-size:1.2rem;font-weight:bold;color:var(--accent)">Награда получена!</div>
+                    <div style="color:var(--text-muted);margin-top:0.5rem">Приходите завтра за новой наградой</div>
+                </div>
+            `;
+            return;
+        }
+
+        const rewards = [
+            { icon: '💰', text: '100 золота', gold: 100 },
+            { icon: '🧪', text: 'Зелье здоровья', item: 'health_potion' },
+            { icon: '⭐', text: '50 опыта', exp: 50 },
+            { icon: '💎', text: 'Кристалл удачи', luck: 1 },
+        ];
+        const todayReward = rewards[new Date().getDate() % rewards.length];
+
+        container.innerHTML = `
+            <div style="padding:2rem;text-align:center;background:linear-gradient(135deg,var(--bg-secondary),var(--bg-card));border-radius:8px;border:1px solid var(--accent)">
+                <div style="font-size:3rem;margin-bottom:1rem">🎁</div>
+                <div style="font-size:1.2rem;font-weight:bold;color:var(--accent);margin-bottom:0.5rem">Ежедневная награда</div>
+                <div style="font-size:2.5rem;margin:1rem 0">${todayReward.icon}</div>
+                <div style="color:var(--text);margin-bottom:1.5rem">${todayReward.text}</div>
+                <button class="btn btn-primary" onclick="App.claimDailyReward()">Забрать награду</button>
+            </div>
+        `;
+    }
+
+    function claimDailyReward() {
+        if (dailyRewardClaimed || !currentCharacter) return;
+
+        const rewards = [
+            { icon: '💰', text: '100 золота', gold: 100 },
+            { icon: '🧪', text: 'Зелье здоровья', item: 'health_potion' },
+            { icon: '⭐', text: '50 опыта', exp: 50 },
+            { icon: '💎', text: 'Кристалл удачи', luck: 1 },
+        ];
+        const todayReward = rewards[new Date().getDate() % rewards.length];
+
+        if (todayReward.gold) currentCharacter.gold += todayReward.gold;
+        if (todayReward.exp) {
+            currentCharacter.experience += todayReward.exp;
+            checkLevelUp();
+        }
+        if (todayReward.item === 'health_potion') {
+            demoInventory.push({ id: Date.now(), name: 'Зелье здоровья', type: 'consumable', icon: '🧪', rarity: 'uncommon', stats: { hp_restore: 50 }, quantity: 1, equipped: false });
+        }
+        if (todayReward.luck) currentCharacter.luck += todayReward.luck;
+
+        dailyRewardClaimed = true;
+        UI.showToast(`Получено: ${todayReward.text}!`, 'success', 3000);
+        updateDemoUI();
+        loadDemoDailyReward();
+    }
+
     // =============================================
     //  SERVER MODE (API)
     // =============================================
@@ -861,8 +1097,15 @@ const App = (() => {
         loadDemoChat,
         loadDemoQuests,
         useDemoItem,
+        loadDemoAchievements,
+        loadDemoCrafting,
+        loadDemoDailyReward,
+        craftItem,
+        claimDailyReward,
+        checkAchievements,
         currentCharacter: () => currentCharacter,
         demoInventory: () => demoInventory,
+        demoStats: () => demoStats,
         addDemoItem: (item) => { demoInventory.push(item); loadDemoInventory(); },
         addDemoWin: () => { demoWinCount++; },
         addDemoLoss: () => { demoLoseCount++; },

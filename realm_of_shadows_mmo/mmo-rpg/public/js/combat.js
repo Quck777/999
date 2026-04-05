@@ -78,6 +78,9 @@ const Combat = (() => {
                 m.current_hp = Math.max(0, m.current_hp - dmg);
                 const critTxt = isCrit ? ' <strong style="color:#ff4444">КРИТ!</strong>' : '';
                 addDemoLog(`${p.name} атакует ${m.name} на <strong style="color:#ff6600">${dmg}</strong> урона.${critTxt}`);
+                
+                // Track crits for achievements
+                if (isCrit && App.demoStats) App.demoStats.crits++;
                 break;
             }
             case 'defend': {
@@ -153,6 +156,11 @@ const Combat = (() => {
         if (m.current_hp <= 0) {
             addDemoLog(`${m.name} повержен!`);
             App.addDemoWin && App.addDemoWin();
+            // Update demoStats for achievements
+            if (App.demoStats) {
+                App.demoStats.wins++;
+                App.demoStats.monstersKilled++;
+            }
             setTimeout(() => showDemoRewards(), 800);
             return;
         }
@@ -195,6 +203,8 @@ const Combat = (() => {
             const dodgeChance = Math.min(p.agility * 0.015, 0.4);
             if (Math.random() < dodgeChance) {
                 addDemoLog(`${p.name} уклонился от атаки ${m.name}!`);
+                // Track dodges for achievements
+                if (App.demoStats) App.demoStats.dodges++;
                 isPlayerTurn = true;
                 setActionsEnabled(true);
                 return;
