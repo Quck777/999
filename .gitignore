@@ -1,17 +1,25 @@
-```
-# Dependencies
-node_modules/
-
-# Build artifacts
+```markdown
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
 dist/
 build/
-*.min.js
-*.min.css
-*.bundle.js
+target/
+
+# Dependencies
+.venv/
+venv/
+node_modules/
+.julia/
+.zig-cache/
 
 # Logs and temp files
 *.log
 *.tmp
+*.swp
+*.swo
 
 # Environment
 .env
@@ -21,8 +29,41 @@ build/
 # Editors
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# OS generated files
+# System files
 .DS_Store
 Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Python specific
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing
+.mypy_cache/
+.pytest_cache/
+.tox/
+
+# Build systems
+.gradle/
+*.class
+*.jar
+*.war
+*.ear
 ```
